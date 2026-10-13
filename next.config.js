@@ -1,10 +1,5 @@
-import createNextIntlPlugin from 'next-intl/plugin';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { execSync } from 'child_process';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const createNextIntlPlugin = require('next-intl/plugin');
+const { execSync } = require('child_process');
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -13,12 +8,18 @@ function resolveAppVersion() {
   if (process.env.NEXT_PUBLIC_APP_VERSION) return process.env.NEXT_PUBLIC_APP_VERSION;
 
   try {
-    const gitHash = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+    const gitHash = execSync('git rev-parse --short HEAD', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
       .toString()
       .trim();
-    const commitDate = execSync('git log -1 --format=%cd --date=format:%Y.%m.%d', { stdio: ['ignore', 'pipe', 'ignore'] })
+
+    const commitDate = execSync('git log -1 --format=%cd --date=format:%Y.%m.%d', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
       .toString()
       .trim();
+
     if (gitHash && commitDate) {
       return `v${commitDate}-${gitHash}`;
     }
@@ -33,11 +34,11 @@ function resolveAppVersion() {
 const nextConfig = {
   // Enable static export for deployment flexibility
   output: 'export',
-  
+
   // Support deployment under a subpath (e.g., /pdfcraft/)
   // Use BASE_PATH or NEXT_PUBLIC_BASE_PATH environment variable
   basePath: process.env.BASE_PATH || process.env.NEXT_PUBLIC_BASE_PATH || '',
-  
+
   assetPrefix: process.env.TAURI_ENV ? '/' : undefined,
 
   env: {
@@ -59,7 +60,7 @@ const nextConfig = {
         module: false,
         url: false,
         worker_threads: false,
-        canvas: false,  // Required for pdfjs-dist-legacy
+        canvas: false, // Required for pdfjs-dist-legacy
       };
     } else {
       // Mark canvas as external for server-side builds
@@ -72,17 +73,17 @@ const nextConfig = {
     // Also add module and canvas to alias for some packages that use it
     config.resolve.alias = {
       ...config.resolve.alias,
-      'module': false,
+      module: false,
     };
 
     // Ignore problematic modules that are not needed in browser
     config.plugins.push(
       new webpack.IgnorePlugin({
-        resourceRegExp: /^module$/
+        resourceRegExp: /^module$/,
       }),
       new webpack.IgnorePlugin({
         resourceRegExp: /^canvas$/,
-        contextRegExp: /pdfjs-dist-legacy/
+        contextRegExp: /pdfjs-dist-legacy/,
       })
     );
 
@@ -136,9 +137,12 @@ const nextConfig = {
   // Compiler options for performance
   compiler: {
     // Remove console.log in production
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn'],
-    } : false,
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? {
+            exclude: ['error', 'warn'],
+          }
+        : false,
   },
 
   // Headers configuration for caching
@@ -293,4 +297,4 @@ const nextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+module.exports = withNextIntl(nextConfig);
